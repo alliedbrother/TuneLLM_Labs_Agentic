@@ -1,0 +1,40 @@
+# Model Registry — Single source of truth for all model versions
+# Managed by the Model Registry Agent
+
+models:
+  v0.0.1:
+    stage: production
+    base_model: "Qwen/Qwen2.5-1.5B-Instruct"
+    type: base
+    description: "Base model, no fine-tuning applied"
+    registered_at: "2026-04-11T00:00:00Z"
+
+  v0.1.0-football-rules:
+    stage: experimental
+    base_model: "meta-llama/Llama-3.2-3B-Instruct"
+    type: lora_adapter
+    method: LoRA
+    dataset: "ds-v0.1.0-football-rules"
+    adapter_path: "workspace/models/v0.1.0-football-rules/final"
+    description: "Llama 3.2 3B fine-tuned on football rules dataset (71 examples)"
+    training:
+      epochs_completed: 1.78
+      final_loss: 2.6786
+      lora_r: 16
+      lora_alpha: 32
+    eval:
+      pre:
+        f1: 0.2369
+        rouge1: 0.2977
+        rougeL: 0.1856
+      post:
+        f1: 0.2712
+        rouge1: 0.3344
+        rougeL: 0.2125
+      delta:
+        f1: "+0.0343 (+14.5%)"
+        rouge1: "+0.0367 (+12.3%)"
+        rougeL: "+0.0269 (+14.5%)"
+    registered_at: "2026-04-12T06:30:20Z"
+
+current_production: "v0.0.1"

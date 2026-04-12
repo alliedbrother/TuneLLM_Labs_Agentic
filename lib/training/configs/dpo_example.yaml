@@ -1,0 +1,58 @@
+# DPO (Direct Preference Optimization) Configuration
+# For aligning models with human preferences
+
+run_name: "llama2-7b-dpo"
+method: "dpo"
+
+# Base model configuration
+base_model: "meta-llama/Llama-2-7b-chat-hf"  # Start from chat model
+model:
+  trust_remote_code: false
+
+# Dataset configuration (preference format required)
+dataset:
+  source: "/data/preferences.json"
+  # Or use HuggingFace Hub: "hf://Anthropic/hh-rlhf"
+  hub_dataset: false
+  split: "train"
+  max_samples: null
+  eval_split: 0.1
+  # DPO requires: prompt, chosen, rejected columns
+
+# Training hyperparameters
+training:
+  num_epochs: 1
+  batch_size: 4
+  gradient_accumulation_steps: 4
+  learning_rate: 5e-7        # Lower LR for DPO
+  warmup_ratio: 0.1
+  max_length: 1024
+  max_prompt_length: 512
+
+# DPO-specific configuration
+dpo:
+  beta: 0.1                   # KL penalty coefficient
+  loss_type: "sigmoid"        # "sigmoid" or "hinge"
+  label_smoothing: 0.0
+
+# LoRA configuration
+lora:
+  enabled: true
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules:
+    - "q_proj"
+    - "v_proj"
+    - "k_proj"
+    - "o_proj"
+
+# Quantization (optional)
+quantization: "4bit"  # Use QLoRA for memory efficiency
+
+# Output options
+save_full_model: false
+
+# Logging
+use_wandb: false
+wandb_project: "tunellm-dpo"

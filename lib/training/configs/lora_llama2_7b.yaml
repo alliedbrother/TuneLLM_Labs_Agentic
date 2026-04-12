@@ -1,0 +1,64 @@
+# LoRA Fine-tuning Configuration for Llama 2 7B
+# This config demonstrates supervised fine-tuning with LoRA adapters
+
+run_name: "llama2-7b-lora-finetune"
+method: "lora"
+
+# Base model configuration
+base_model: "meta-llama/Llama-2-7b-hf"
+model:
+  trust_remote_code: false
+  attn_implementation: null  # Use 'flash_attention_2' if available
+
+# Dataset configuration
+dataset:
+  source: "/data/dataset.json"  # Path to your dataset
+  # Or use HuggingFace Hub: "hf://tatsu-lab/alpaca"
+  hub_dataset: false
+  split: "train"
+  max_samples: null  # Set to limit dataset size for testing
+  eval_split: 0.1   # 10% for evaluation
+  prompt_template: |
+    ### Instruction:
+    {instruction}
+
+    ### Input:
+    {input}
+
+    ### Response:
+    {output}
+
+# Training hyperparameters
+training:
+  num_epochs: 3
+  batch_size: 4
+  gradient_accumulation_steps: 4
+  learning_rate: 2e-4
+  warmup_ratio: 0.03
+  max_length: 2048
+  weight_decay: 0.01
+  lr_scheduler_type: "cosine"
+
+# LoRA configuration
+lora:
+  r: 16                    # Rank of the low-rank matrices
+  alpha: 32                # Scaling factor (alpha/r)
+  dropout: 0.05            # Dropout probability
+  target_modules:          # Modules to apply LoRA to
+    - "q_proj"
+    - "v_proj"
+    - "k_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+
+# Quantization (optional, set to null for full precision)
+quantization: null  # Or "4bit" for QLoRA, "8bit" for 8-bit
+
+# Output options
+save_full_model: false  # If true, merge LoRA and save full model
+
+# Logging
+use_wandb: false
+wandb_project: "tunellm-training"

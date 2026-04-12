@@ -1,0 +1,44 @@
+run_name: v0.1.0-math-test
+method: lora
+base_model: Qwen/Qwen2.5-1.5B-Instruct
+dataset:
+  source: workspace/datasets/ds-v0.1.0-math-test/train.jsonl
+  eval_split: 0.1
+  max_samples: 100
+  prompt_template: '### Instruction:
+
+    {instruction}
+
+
+    ### Input:
+
+    {input}
+
+
+    ### Response:
+
+    {output}'
+training:
+  num_epochs: 1
+  batch_size: 4
+  gradient_accumulation_steps: 4
+  learning_rate: 0.0002
+  warmup_ratio: 0.03
+  max_length: 2048
+  weight_decay: 0.01
+  lr_scheduler_type: cosine
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules:
+  - q_proj
+  - v_proj
+  - k_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+quantization: null
+save_full_model: false
+use_wandb: false

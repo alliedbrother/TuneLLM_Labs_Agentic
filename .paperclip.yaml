@@ -1,0 +1,101 @@
+schema: paperclip/v1
+
+agents:
+  ceo:
+    adapter:
+      type: claude_local
+      config:
+        model: claude-opus-4-6
+        dangerouslySkipPermissions: true
+    inputs:
+      env: {}
+
+  inference:
+    adapter:
+      type: claude_local
+      config:
+        model: claude-sonnet-4-6
+        dangerouslySkipPermissions: true
+    inputs:
+      env:
+        INFERENCE_API_URL:
+          kind: secret
+          requirement: optional
+        MODEL_SERVING_ENDPOINT:
+          kind: secret
+          requirement: optional
+
+  data-selection:
+    adapter:
+      type: claude_local
+      config:
+        model: claude-sonnet-4-6
+        dangerouslySkipPermissions: true
+    inputs:
+      env:
+        DATA_STORE_URL:
+          kind: secret
+          requirement: optional
+
+  data-creation:
+    adapter:
+      type: claude_local
+      config:
+        model: claude-sonnet-4-6
+        dangerouslySkipPermissions: true
+    inputs:
+      env: {}
+
+  finetuning:
+    adapter:
+      type: claude_local
+      config:
+        model: claude-sonnet-4-6
+        dangerouslySkipPermissions: true
+    inputs:
+      env:
+        WANDB_API_KEY:
+          kind: secret
+          requirement: optional
+        HF_TOKEN:
+          kind: secret
+          requirement: optional
+
+  evaluation:
+    adapter:
+      type: claude_local
+      config:
+        model: claude-sonnet-4-6
+        dangerouslySkipPermissions: true
+    inputs:
+      env:
+        EVAL_HARNESS_PATH:
+          kind: text
+          requirement: optional
+
+  infra-management:
+    adapter:
+      type: claude_local
+      config:
+        model: claude-sonnet-4-6
+        dangerouslySkipPermissions: true
+    inputs:
+      env:
+        CLOUD_PROVIDER:
+          kind: text
+          requirement: optional
+        CLOUD_API_KEY:
+          kind: secret
+          requirement: optional
+
+  model-registry:
+    adapter:
+      type: claude_local
+      config:
+        model: claude-sonnet-4-6
+        dangerouslySkipPermissions: true
+    inputs:
+      env:
+        ARTIFACT_STORE_URL:
+          kind: secret
+          requirement: optional
