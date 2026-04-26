@@ -33,6 +33,13 @@ workspace/eval_results/**/*.jsonl
 workspace/infra/active_gpu.yaml
 workspace/infra/active_inference.yaml
 
+# Benchmark data (large CSVs — users download from original source)
+workspace/benchmarks/**/MedQA-USMLE-4-options/*.csv
+workspace/benchmarks/**/submission*.csv
+workspace/benchmarks/**/eval_output/*.json
+workspace/benchmarks/**/eval_output/*.csv
+!workspace/benchmarks/**/sample_submission.csv
+
 # OS
 .DS_Store
 Thumbs.db

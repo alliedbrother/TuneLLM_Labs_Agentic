@@ -79,13 +79,51 @@ The registry is a YAML file at `$WORKSPACE/registry/registry.yaml`. You are the 
 - Never delete model artifacts without CEO approval
 - Keep at least 3 previous production versions for rollback
 
-## Pipeline Handoff
+## Pipeline Handoff (MANDATORY when `## Pipeline Context` is in the task — iterative loop)
 
-If your task description contains a `## Pipeline Context` section, you are part of an end-to-end fine-tuning pipeline. The Model Registry is the **last agent** in the chain. After registering the model:
+**CHECK YOUR TASK DESCRIPTION NOW.** If it contains a `## Pipeline Context` section with `pipeline: e2e-finetune-iterative`, you are part of the iterative self-improvement loop. After registering the model, you MUST hand off back to the CEO so the CEO can decide whether to terminate or run another iteration.
 
-1. Post a comment summarizing the full pipeline: dataset used, model version, eval results, recommendation
-2. If `eval_recommendation` in the pipeline context is `APPROVE`, promote the model to `evaluated` stage
-3. Mark the task as done
-4. **No further handoff needed** — the Evaluation Agent already created a GPU teardown task
+**Your task is NOT complete until:**
+1. You registered the model in `workspace/registry/registry.yaml`
+2. If `eval_recommendation` is APPROVE, promoted the model to `evaluated` stage
+3. You posted your comment with iteration summary
+4. **You created TWO handoff tasks:**
+   a. **CEO loop-back task** — for replan decision
+   b. **Infra teardown task** — to destroy the GPU instance (cost safety)
+5. THEN you mark your task done
 
-If there is NO `## Pipeline Context`, just do your work and mark done.
+### Handoff 1: CEO loop-back (the iterative loop trigger)
+
+```bash
+curl -s -X POST "$PAPERCLIP_API_URL/api/companies/$PAPERCLIP_COMPANY_ID/issues" \
+  -H "Authorization: Bearer $PAPERCLIP_API_KEY" \
+  -H "X-Paperclip-Run-Id: $PAPERCLIP_RUN_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "[Pipeline] CEO replan decision after iteration <N> (<version_tag>)",
+    "description": "Iteration <N> complete. Read iteration_history.yaml and Pipeline Context, decide: terminate (success/max-iters/plateau) or continue with iteration <N+1>.\n\n## Pipeline Context\n<copy ALL fields forward, with all accumulated results>\n\nThis is a CEO replan task. The CEO decides next steps based on accuracy, target, and history.",
+    "assigneeAgentId": "826cd065-4b44-4b72-bd48-e61f211257a1",
+    "parentId": "<parent_task_id from pipeline context>",
+    "status": "todo"
+  }'
+```
+
+### Handoff 2: Infra teardown (cost safety)
+
+```bash
+curl -s -X POST "$PAPERCLIP_API_URL/api/companies/$PAPERCLIP_COMPANY_ID/issues" \
+  -H "Authorization: Bearer $PAPERCLIP_API_KEY" \
+  -H "X-Paperclip-Run-Id: $PAPERCLIP_RUN_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "[Pipeline] Teardown GPU after iteration <N> (<version_tag>)",
+    "description": "Iteration <N> complete. Destroy the Vast.ai instance to stop billing.\n\nRead instance_id from: /Users/saiakhil/Documents/Personal_Projects_Git_Sync/fine_tune_framework/workspace/infra/active_gpu.yaml\n\nThis is NOT part of the pipeline chain — just a cost-safety task. No handoff needed after teardown.",
+    "assigneeAgentId": "9a545453-7cdd-4f15-9405-e69f013e4e3b",
+    "parentId": "<parent_task_id from pipeline context>",
+    "status": "todo"
+  }'
+```
+
+If `pipeline` is `e2e-finetune` (the old non-iterative version) — keep the previous behavior: no CEO loop-back, just teardown.
+
+If there is NO `## Pipeline Context`, just do your work and mark done. No handoff.

@@ -78,6 +78,22 @@ Use `curl`, `wget`, or Python `httpx`/`requests` to download from known open dat
 ### Local check
 Always check `/Users/saiakhil/Documents/Personal_Projects_Git_Sync/fine_tune_framework/datasets/` first — data may already be downloaded from a previous run.
 
+### Benchmark datasets (special case)
+If the task asks to train on a benchmark dataset (e.g., MedQA), the training data may already be in `workspace/benchmarks/<name>/agent_end/`:
+
+```
+workspace/benchmarks/medqa-usmle/agent_end/MedQA-USMLE-4-options/train.csv  (10,178 rows)
+```
+
+When the task mentions MedQA, USMLE, or medical Q&A:
+1. Use `workspace/benchmarks/medqa-usmle/agent_end/MedQA-USMLE-4-options/train.csv` as the source
+2. Convert the CSV to Alpaca JSONL format:
+   - `instruction` = the `question` column
+   - `input` = formatted options (e.g., "A. ...\nB. ...\nC. ...\nD. ...")
+   - `output` = the `answer` column (full-text gold answer)
+3. Write to `workspace/datasets/ds-{version}-medqa/train.jsonl` + `eval.jsonl`
+4. The Evaluation Agent will automatically score against the held-out benchmark test set
+
 ## Output Contract
 
 The prepared dataset at `workspace/datasets/ds-{version}-{tag}/` must have:
@@ -118,6 +134,30 @@ If you search thoroughly and can't find sufficient quality data for the topic:
 2. Post a comment explaining: what you searched, what you found, how many examples, what's missing
 3. Reassign the task to the CEO with a recommendation (e.g., "Found 200 examples, need 5000+. Recommend Data Creation Agent for synthetic generation.")
 4. **Do NOT mark the task as blocked. Do NOT leave without a comment.**
+
+## Filtering Method Pool
+
+When the Pipeline Context includes `data_filter_method`, apply that filter to the dataset after format conversion but before writing the final train/eval splits:
+
+| Method | What it does | When CEO chooses it |
+|--------|------------|---------------------|
+| `none` | No filtering — use the full dataset | First iteration / large dataset |
+| `quality_score` | Score each example by length, completeness, no garbage characters; keep top 80% | Default when filter is needed |
+| `diversity` | Cluster examples by embedding similarity, keep cluster representatives to reduce repetition | When the dataset has many similar templates |
+| `difficulty` | Use the base model to compute perplexity per example; keep top 50% hardest (curriculum learning) | When the model is plateauing on easy examples |
+
+If `data_filter_method` is missing or `none`, skip filtering. If it's specified but unknown, default to `quality_score` and note in the manifest.
+
+For `difficulty` filtering, you'll need access to a base model on the GPU — but this is your concern only if you want to actually run perplexity scoring. As a simpler alternative, sort by output length (longer outputs often correspond to more complex examples) or skip if compute is unavailable, and document the choice in the manifest.
+
+Whatever filter is used, document it in `manifest.yaml`:
+```yaml
+filtering:
+  method: difficulty
+  original_records: 10000
+  records_after_filter: 5000
+  notes: "Top-50% hardest examples by base-model perplexity"
+```
 
 ## Pipeline Handoff (MANDATORY when `## Pipeline Context` is in the task)
 
